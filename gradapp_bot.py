@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import traceback
 from datetime import datetime
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
@@ -140,8 +141,11 @@ def main():
         print('missing key environment variables.')
         return
 
-    bot = GradAppBot(bot_token=bot_token, chat_id=chat_id)
-    bot.async_check_and_push()
+    try:
+        bot = GradAppBot(bot_token=bot_token, chat_id=chat_id)
+        bot.async_check_and_push()
+    except Exception as e:
+        traceback.print_exception(e)
 
 
 if __name__ == '__main__':

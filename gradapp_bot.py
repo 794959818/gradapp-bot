@@ -108,20 +108,27 @@ class GradAppBot:
                 disable_web_page_preview=False,
                 disable_notification=False)
 
-    async def update(self):
-        threads = get_gradapp_threads(last_tid=await self.get_last_tid())
+    async def check_and_push(self):
+        last_tid = await self.get_last_tid()
+        threads = get_gradapp_threads(last_tid=last_tid)
 
         # skip if no threads
         if len(threads) <= 0:
+            print('No new threads found since last tid: {0}.'.format(last_tid))
             return
 
         # broadcast to channel if update last tid succeeded
         if await self.set_last_tid(threads[0]['tid']):
+            print('Found {0} threads since last tid: {0}.'.format(len(threads), last_tid))
+
+            # iterate threads
             for thread in threads[::-1]:
+                print('tid={tid}\tsubject={subject}'.format(
+                    tid=thread['tid'], subject=thread['subject']))
                 await self.broadcast(thread)
 
-    def async_update(self):
-        asyncio.run(self.update())
+    def async_check_and_push(self):
+        asyncio.run(self.check_and_push())
 
 
 def main():
@@ -134,7 +141,7 @@ def main():
         return
 
     bot = GradAppBot(bot_token=bot_token, chat_id=chat_id)
-    bot.async_update()
+    bot.async_check_and_push()
 
 
 if __name__ == '__main__':

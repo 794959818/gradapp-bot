@@ -3,6 +3,7 @@ name: GradApp-Bot
 on:
   repository_dispatch:
   workflow_dispatch:
+  schedule: [{cron: '* * * * *'}]
 
 jobs:
   build:

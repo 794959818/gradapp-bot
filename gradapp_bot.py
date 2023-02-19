@@ -1,6 +1,8 @@
 import asyncio
 import os
+import random
 import re
+import time
 import traceback
 from datetime import datetime
 from urllib.parse import quote
@@ -8,6 +10,10 @@ from zoneinfo import ZoneInfo
 
 import requests
 import telegram
+
+
+def random_sleep():
+    time.sleep(random.uniform(1, 3))
 
 
 def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
@@ -57,6 +63,9 @@ def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
             # this list contains all unpushed threads
             if threads[-1]['tid'] <= last_tid:
                 return [t for t in threads if t['tid'] > last_tid]
+
+            # prevent fast API requesting
+            random_sleep()
 
             # need to fetch more threads
             return threads + inline_get_gradapp_threads(pg=pg + 1, depth=depth + 1)
@@ -126,6 +135,8 @@ class GradAppBot:
             for thread in threads[::-1]:
                 print('tid={tid}\tsubject={subject}'.format(
                     tid=thread['tid'], subject=thread['subject']))
+                # prevent telegram flood control
+                random_sleep()
                 await self.broadcast(thread)
 
     def async_check_and_push(self):

@@ -1,2 +1,3 @@
-# gradapp-bot
-Graduate Application Bot 🤖
+# GradApp Bot 🤖
+
+研究生录取推送 | Offer多多

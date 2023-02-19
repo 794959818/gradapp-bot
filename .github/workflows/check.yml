@@ -1,4 +1,4 @@
-name: GradApp-Bot
+name: Check
 
 on:
   repository_dispatch:

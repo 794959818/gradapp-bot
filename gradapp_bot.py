@@ -107,7 +107,7 @@ class GradAppBot:
             .format(subject=thread['subject'], tid=thread['tid'])
 
         message += ' '.join(
-            ['#' + thread['author'], '#' +
+            ['#' + thread['author'],
              datetime.fromtimestamp(thread['dateline'], tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')] +
             ['\n#' + dict(i)['tagname'] for i in thread['topic_tag'] if isinstance(i, dict)])
 

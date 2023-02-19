@@ -3,9 +3,11 @@ import re
 import asyncio
 import requests
 import telegram
+from urllib.parse import quote
 
 
 def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
+    # HTTP session
     with requests.Session() as session:
 
         def inline_get_gradapp_threads(pg: int = 1, depth: int = 1) -> list[dict]:
@@ -33,7 +35,7 @@ def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
                         'accept': 'application/json, text/plain, */*',
                         'accept-encoding': 'gzip, deflate, br',
                         'accept-language': 'en-US,en;q=0.9',
-                        'user-agent': '%E4%B8%80%E4%BA%A9%E4%B8%89%E5%88%86%E5%9C%B0/0 CFNetwork/1404.0.5 Darwin/22.3.0',
+                        'user-agent': '{UA}/0 CFNetwork/1404.0.5 Darwin/22.3.0'.format(UA=quote("一亩三分地")),
                     }
             ) as r:
                 r.raise_for_status()
@@ -121,15 +123,15 @@ class GradAppBot:
 
 
 def main():
-    tg_bot_token = os.getenv('TG_BOT_TOKEN')
-    tg_chat_id = os.getenv('TG_CHAT_ID')
+    bot_token = os.getenv('TG_BOT_TOKEN')
+    chat_id = os.getenv('TG_CHAT_ID')
 
-    if not tg_bot_token \
-            or not tg_chat_id:
+    if not bot_token \
+            or not chat_id:
         print('missing key environment variables.')
         return
 
-    bot = GradAppBot(bot_token=tg_bot_token, chat_id=tg_chat_id)
+    bot = GradAppBot(bot_token=bot_token, chat_id=chat_id)
     bot.async_update()
 
 

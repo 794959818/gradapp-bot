@@ -116,7 +116,7 @@ class GradAppBot:
 
         # broadcast to channel if update last tid succeeded
         if await self.set_last_tid(threads[0]['tid']):
-            for thread in threads:
+            for thread in threads[::-1]:
                 await self.broadcast(thread)
 
     def async_update(self):

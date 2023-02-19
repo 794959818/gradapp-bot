@@ -4,6 +4,8 @@ import asyncio
 import requests
 import telegram
 from urllib.parse import quote
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
@@ -45,8 +47,6 @@ def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
             assert len(data['threads']) > 0
 
             threads = data['threads']
-
-            print(pg, depth)
 
             # return all current threads
             if last_tid <= 0 or depth >= 5:
@@ -96,7 +96,8 @@ class GradAppBot:
             .format(subject=thread['subject'], tid=thread['tid'])
 
         message += ' '.join(
-            ['#' + thread['author']] +
+            ['#' + thread['author'], '#' +
+             datetime.fromtimestamp(thread['dateline'], tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')] +
             ['#' + dict(i)['tagname'] for i in thread['topic_tag'] if isinstance(i, dict)])
 
         async with self.bot:

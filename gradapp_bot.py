@@ -109,7 +109,7 @@ class GradAppBot:
         message += ' '.join(
             ['#' + thread['author'], '#' +
              datetime.fromtimestamp(thread['dateline'], tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')] +
-            ['#' + dict(i)['tagname'] for i in thread['topic_tag'] if isinstance(i, dict)])
+            ['\n#' + dict(i)['tagname'] for i in thread['topic_tag'] if isinstance(i, dict)])
 
         async with self.bot:
             await self.bot.send_message(

@@ -241,8 +241,8 @@ class GradAppBot:
             '{logo} {subject}'.format(logo=logo, subject=thread['subject']),
             *(f'* {k}: {v}' for k, v in dict(thread['details']).items()),
             '#{author} {date}'.format(author=thread['author'], date=post_date),
-            '\n'.join('#' + str(dict(i)['tagname']).replace(' ', '_')
-                      for i in thread['topic_tag'] if isinstance(i, dict)),
+            *('#' + str(dict(i)['tagname']).replace(' ', '_')
+              for i in thread['topic_tag'] if isinstance(i, dict)),
             'https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=thread['tid']),
         ])
 

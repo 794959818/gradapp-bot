@@ -1,7 +1,9 @@
 import asyncio
+import logging
 import os
 import random
 import re
+import sys
 import time
 import traceback
 import typing
@@ -12,6 +14,8 @@ from zoneinfo import ZoneInfo
 import requests
 import telegram
 from bs4 import BeautifulSoup
+
+logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 
 def wait(n: float):
@@ -29,8 +33,8 @@ def no_exception(v: typing.Any):
             try:
                 return call(*args, **kwargs)
             except Exception as e:
-                print('{function}(...) => {exception}'.
-                      format(function=call.__name__, exception=e))
+                logging.warning('{function}(...) => {exception}'.
+                                format(function=call.__name__, exception=e))
                 return v
         return wrapper
     return decorator
@@ -174,7 +178,7 @@ class GradAppBot:
 
         # skip if no threads
         if len(threads) == 0:
-            print('No new threads found since last tid: {0}.'.format(last_tid))
+            logging.info('No new threads found since last tid: {0}.'.format(last_tid))
             return
 
         # extend and iterate threads in ascending order
@@ -183,7 +187,7 @@ class GradAppBot:
             if not await self.set_last_tid(thread['tid']):
                 break
 
-            print('tid={tid}\tsubject={subject}'.format(
+            logging.info('tid={tid}\tsubject={subject}'.format(
                 tid=thread['tid'], subject=thread['subject']))
             # broadcast to channel
             await self.broadcast(thread)
@@ -198,7 +202,7 @@ def main():
 
     if not bot_token \
             or not chat_id:
-        print('missing key environment variables.')
+        logging.info('missing key environment variables.')
         return
 
     try:

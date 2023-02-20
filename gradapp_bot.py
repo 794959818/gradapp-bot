@@ -110,13 +110,11 @@ class GradAppBot:
         post_date = datetime.fromtimestamp(thread['dateline'], tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')
         thread_url = 'https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=thread['tid'])
 
-        message = '{subject}\n{url}\n'.format(subject=thread['subject'], url=thread_url)
-
-        message += ' '.join(
-            ['#' + thread['author'], post_date] +
-            ['\n#' + dict(i)['tagname'] for i in thread['topic_tag'] if isinstance(i, dict)])
-
-        return message
+        return '\n'.join([
+            thread['subject'], thread_url,
+            '#{author} {date}'.format(author=thread['author'], date=post_date),
+            '\n'.join('#' + dict(i)['tagname'] for i in thread['topic_tag'] if isinstance(i, dict)),
+        ])
 
     @wait(random.uniform(1, 3))
     async def broadcast(self, thread: dict):

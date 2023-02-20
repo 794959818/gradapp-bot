@@ -105,20 +105,25 @@ class GradAppBot:
                 chat_id=self.chat_id,
                 description=self.chat_description)
 
-    @wait(random.uniform(1, 3))
-    async def broadcast(self, thread: dict):
-        message = '{subject}\nhttps://www.1point3acres.com/bbs/thread-{tid}-1-1.html\n' \
-            .format(subject=thread['subject'], tid=thread['tid'])
+    @staticmethod
+    def format_message(thread: dict):
+        post_date = datetime.fromtimestamp(thread['dateline'], tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')
+        thread_url = 'https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=thread['tid'])
+
+        message = '{subject}\n{url}\n'.format(subject=thread['subject'], url=thread_url)
 
         message += ' '.join(
-            ['#' + thread['author'],
-             datetime.fromtimestamp(thread['dateline'], tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')] +
+            ['#' + thread['author'], post_date] +
             ['\n#' + dict(i)['tagname'] for i in thread['topic_tag'] if isinstance(i, dict)])
 
+        return message
+
+    @wait(random.uniform(1, 3))
+    async def broadcast(self, thread: dict):
         async with self.bot:
             await self.bot.send_message(
                 chat_id=self.chat_id,
-                text=message,
+                text=self.format_message(thread),
                 disable_web_page_preview=False,
                 disable_notification=False)
 

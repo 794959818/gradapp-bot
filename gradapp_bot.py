@@ -97,6 +97,7 @@ def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
 def extend_threads(threads: typing.Iterable[dict]) -> typing.Iterable[dict]:
     with requests.Session() as session:
         @no_exception(v={})
+        @wait(random.uniform(0.5, 2.0))
         def get_thread_details(tid: int) -> dict:
             with session.get(
                     url='https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=tid)) as r:

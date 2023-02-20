@@ -7,7 +7,6 @@ import sys
 import time
 import traceback
 import typing
-import warnings
 from datetime import datetime
 from functools import cached_property
 from urllib.parse import quote
@@ -25,6 +24,19 @@ def wait(n: float):
         def wrapper(*args, **kwargs):
             time.sleep(n)
             return call(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def no_exception(v: typing.Any):
+    def decorator(call):
+        def wrapper(*args, **kwargs):
+            try:
+                return call(*args, **kwargs)
+            except Exception as e:
+                logging.warning('{function}() => {exception}'.
+                                format(function=call.__name__, exception=e))
+                return v
         return wrapper
     return decorator
 
@@ -131,6 +143,7 @@ class Helper1P3A:
         return (dict(**thread, details=self.get_thread_details(thread['tid']))
                 for thread in self.get_gradapp_threads(last_tid=last_tid))
 
+    @no_exception(v={})
     @wait(random.uniform(0.5, 2.0))
     def get_thread_details(self, tid: int) -> dict:
         """
@@ -165,10 +178,9 @@ class Helper1P3A:
                 dict(table['choices']).get(value) if table.get('choices') else value
         return details
 
+    @no_exception(v={})
     @wait(random.uniform(0.5, 2.0))
     def get_thread_details_legacy(self, tid: int) -> dict:
-        warnings.warn("The 'get_thread_details_legacy' function is deprecated, "
-                      "use 'get_thread_details' instead", DeprecationWarning, 2)
         # NOTE: this method can be usually blocked by Cloudflare
         with self.session.get(
                 url='https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=tid)) as r:

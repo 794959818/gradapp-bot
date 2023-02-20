@@ -29,7 +29,8 @@ def no_exception(v: typing.Any):
             try:
                 return call(*args, **kwargs)
             except Exception as e:
-                print('{function}(...) => {exception}'.format(function=call.__name__, exception=e))
+                print('{function}(...) => {exception}'.
+                      format(function=call.__name__, exception=e))
                 return v
         return wrapper
     return decorator
@@ -141,13 +142,21 @@ class GradAppBot:
     def format_message(thread: dict):
         post_date = datetime.fromtimestamp(thread['dateline'],
                                            tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')
+        logo = (lambda v:
+                '🎉' if v == 'Offer' else (
+                    '✅' if v == 'AD小奖' else (
+                        '✅' if v == 'AD无奖' else (
+                            '🚫' if v == 'Reject' else (
+                                '⏳' if v == 'Waiting' else '📖')))
+                ))(thread['details'].get('申请结果'))
 
         return '\n'.join([
-            thread['subject'],
-            *(f'* {k}: {v}' for k, v in thread['details']),
+            '{logo} {subject}'.format(logo=logo, subject=thread['subject']),
+            *(f'* {k}: {v}' for k, v in dict(thread['details']).items()),
             'https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=thread['tid']),
-            '#{author} posted on {date}'.format(author=thread['author'], date=post_date),
-            '\n'.join('#' + dict(i)['tagname'] for i in thread['topic_tag'] if isinstance(i, dict)),
+            '#{author} {date}'.format(author=thread['author'], date=post_date),
+            '\n'.join('#' + str(dict(i)['tagname']).replace(' ', '_')
+                      for i in thread['topic_tag'] if isinstance(i, dict)),
         ])
 
     @wait(random.uniform(1, 3))

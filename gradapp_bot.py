@@ -12,14 +12,20 @@ import requests
 import telegram
 
 
-def random_sleep():
-    time.sleep(random.uniform(1, 3))
+def wait(n: float):
+    def decorator(call):
+        def wrapper(*args, **kwargs):
+            time.sleep(n)
+            return call(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
     # HTTP session
     with requests.Session() as session:
 
+        @wait(random.uniform(1, 3))
         def inline_get_gradapp_threads(pg: int = 1, depth: int = 1) -> list[dict]:
             """
             cURL Example:
@@ -64,9 +70,6 @@ def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
             if threads[-1]['tid'] <= last_tid:
                 return [t for t in threads if t['tid'] > last_tid]
 
-            # prevent fast API requesting
-            random_sleep()
-
             # need to fetch more threads
             return threads + inline_get_gradapp_threads(pg=pg + 1, depth=depth + 1)
 
@@ -102,6 +105,7 @@ class GradAppBot:
                 chat_id=self.chat_id,
                 description=self.chat_description)
 
+    @wait(random.uniform(1, 3))
     async def broadcast(self, thread: dict):
         message = '{subject}\nhttps://www.1point3acres.com/bbs/thread-{tid}-1-1.html\n' \
             .format(subject=thread['subject'], tid=thread['tid'])
@@ -135,8 +139,6 @@ class GradAppBot:
             for thread in threads[::-1]:
                 print('tid={tid}\tsubject={subject}'.format(
                     tid=thread['tid'], subject=thread['subject']))
-                # prevent telegram flood control
-                random_sleep()
                 await self.broadcast(thread)
 
     def async_check_and_push(self):

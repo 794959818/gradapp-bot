@@ -4,12 +4,14 @@ import random
 import re
 import time
 import traceback
+import typing
 from datetime import datetime
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 import requests
 import telegram
+from bs4 import BeautifulSoup
 
 
 def wait(n: float):
@@ -21,8 +23,19 @@ def wait(n: float):
     return decorator
 
 
+def no_exception(v: typing.Any):
+    def decorator(call):
+        def wrapper(*args, **kwargs):
+            try:
+                return call(*args, **kwargs)
+            except Exception as e:
+                print('{function}(...) => {exception}'.format(function=call.__name__, exception=e))
+                return v
+        return wrapper
+    return decorator
+
+
 def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
-    # HTTP session
     with requests.Session() as session:
 
         @wait(random.uniform(1, 3))
@@ -76,6 +89,25 @@ def get_gradapp_threads(last_tid: int = 0) -> list[dict]:
         return inline_get_gradapp_threads()
 
 
+def extend_threads(threads: typing.Iterable[dict]) -> typing.Iterable[dict]:
+    with requests.Session() as session:
+        @no_exception(v={})
+        def get_thread_details(tid: int) -> dict:
+            with session.get(
+                    url='https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=tid)) as r:
+                r.raise_for_status()
+
+                return dict((k, v) for k, v in
+                            ((str(row.find('th').text).rstrip(':'), str(row.find('td').text).strip())
+                             for row in BeautifulSoup(r.content, 'html.parser')
+                            .find('table', attrs={'summary': '分类信息'})
+                            .find('tbody')
+                            .find_all('tr'))
+                            if not any(s in v for s in ('隐藏内容', '积分不足', '解锁阅读')))
+
+        return (dict(**thread, details=get_thread_details(thread['tid'])) for thread in threads)
+
+
 class GradAppBot:
 
     def __init__(self, bot_token: str, chat_id: str):
@@ -107,12 +139,14 @@ class GradAppBot:
 
     @staticmethod
     def format_message(thread: dict):
-        post_date = datetime.fromtimestamp(thread['dateline'], tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')
-        thread_url = 'https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=thread['tid'])
+        post_date = datetime.fromtimestamp(thread['dateline'],
+                                           tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')
 
         return '\n'.join([
-            thread['subject'], thread_url,
-            '#{author} {date}'.format(author=thread['author'], date=post_date),
+            thread['subject'],
+            *(f'* {k}: {v}' for k, v in thread['details']),
+            'https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=thread['tid']),
+            '#{author} posted on {date}'.format(author=thread['author'], date=post_date),
             '\n'.join('#' + dict(i)['tagname'] for i in thread['topic_tag'] if isinstance(i, dict)),
         ])
 
@@ -130,19 +164,20 @@ class GradAppBot:
         threads = get_gradapp_threads(last_tid=last_tid)
 
         # skip if no threads
-        if len(threads) <= 0:
+        if len(threads) == 0:
             print('No new threads found since last tid: {0}.'.format(last_tid))
             return
 
-        # broadcast to channel if update last tid succeeded
-        if await self.set_last_tid(threads[0]['tid']):
-            print('Found {0} threads since last tid: {0}.'.format(len(threads), last_tid))
+        # extend and iterate threads in ascending order
+        for thread in extend_threads(threads[::-1]):
+            # break if update last tid succeeded
+            if not await self.set_last_tid(thread['tid']):
+                break
 
-            # iterate threads
-            for thread in threads[::-1]:
-                print('tid={tid}\tsubject={subject}'.format(
-                    tid=thread['tid'], subject=thread['subject']))
-                await self.broadcast(thread)
+            print('tid={tid}\tsubject={subject}'.format(
+                tid=thread['tid'], subject=thread['subject']))
+            # broadcast to channel
+            await self.broadcast(thread)
 
     def async_check_and_push(self):
         asyncio.run(self.check_and_push())

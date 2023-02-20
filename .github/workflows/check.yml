@@ -25,3 +25,5 @@ jobs:
         env:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          API_TOKEN_1P3A: ${{ secrets.API_TOKEN_1P3A }}
+          DEVICE_ID_1P3A: ${{ secrets.DEVICE_ID_1P3A }}

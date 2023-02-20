@@ -7,6 +7,7 @@ import sys
 import time
 import traceback
 import typing
+import warnings
 from datetime import datetime
 from functools import cached_property
 from urllib.parse import quote
@@ -74,7 +75,7 @@ class Helper1P3A:
         # pre-defined options
         return data['options']
 
-    def _find_option_by_id(self, option_id: int) -> dict:
+    def __find_option_by_id(self, option_id: int) -> dict:
         for option in self.options:
             if option['optionid'] == option_id:
                 return option
@@ -124,7 +125,7 @@ class Helper1P3A:
             # need to fetch more threads
             return threads + inline_get_gradapp_threads(pg=pg + 1, depth=depth + 1)
 
-        return inline_get_gradapp_threads()
+        return reversed(inline_get_gradapp_threads())
 
     def get_gradapp_threads_with_details(self, last_tid: int = 0) -> typing.Iterable[dict]:
         return (dict(**thread, details=self.get_thread_details(thread['tid']))
@@ -157,15 +158,17 @@ class Helper1P3A:
         details = {}
         for option in data['options']:
             value = str(option['value']).strip(' |')
-            opt = self._find_option_by_id(option['optionid'])
-            if not opt or not value:
+            table = self.__find_option_by_id(option['optionid'])
+            if not table or not value:
                 continue
-            details[opt['title']] = \
-                opt['choices'][value] if opt.get('choices') else value
+            details[table['title']] = \
+                dict(table['choices']).get(value) if table.get('choices') else value
         return details
 
     @wait(random.uniform(0.5, 2.0))
     def get_thread_details_legacy(self, tid: int) -> dict:
+        warnings.warn("The 'get_thread_details_legacy' function is deprecated, "
+                      "use 'get_thread_details' instead", DeprecationWarning, 2)
         # NOTE: this method can be usually blocked by Cloudflare
         with self.session.get(
                 url='https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=tid)) as r:
@@ -225,10 +228,10 @@ class GradAppBot:
         return '\n'.join([
             '{logo} {subject}'.format(logo=logo, subject=thread['subject']),
             *(f'* {k}: {v}' for k, v in dict(thread['details']).items()),
-            'https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=thread['tid']),
             '#{author} {date}'.format(author=thread['author'], date=post_date),
             '\n'.join('#' + str(dict(i)['tagname']).replace(' ', '_')
                       for i in thread['topic_tag'] if isinstance(i, dict)),
+            'https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=thread['tid']),
         ])
 
     @wait(random.uniform(1, 3))
@@ -244,8 +247,9 @@ class GradAppBot:
         last_tid = await self.get_last_tid()
         threads = self.helper.get_gradapp_threads_with_details(last_tid=last_tid)
 
-        # extend and iterate threads in ascending order
-        for thread in threads[::-1]:
+        count = 0
+        # iterate threads in ascending order
+        for thread in threads:
             # break if update last tid succeeded
             if not await self.set_last_tid(thread['tid']):
                 break
@@ -254,6 +258,9 @@ class GradAppBot:
                 tid=thread['tid'], subject=thread['subject']))
             # broadcast to channel
             await self.broadcast(thread)
+            count += 1
+
+        logging.info('Found and broadcast {0} threads.'.format(count))
 
     def async_check_and_push(self):
         asyncio.run(self.check_and_push())

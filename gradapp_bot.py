@@ -263,7 +263,7 @@ class GradAppBot:
             # build broadcast message from thread
             message = self.format_message(thread=thread)
 
-            # break if update last tid succeeded
+            # break if update last tid failed
             if not await self.set_last_tid(thread['tid']):
                 break
 

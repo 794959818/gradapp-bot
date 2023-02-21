@@ -7,10 +7,8 @@ import sys
 import time
 import traceback
 import typing
-from datetime import datetime
 from functools import cached_property
 from urllib.parse import quote
-from zoneinfo import ZoneInfo
 
 import requests
 import telegram
@@ -225,23 +223,26 @@ class GradAppBot:
 
     @staticmethod
     def format_message(thread: dict):
-        post_date = datetime.fromtimestamp(thread['dateline'],
-                                           tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')
-
+        # Logo generator
         logo = {
             'Offer': '🎉',
             'AD小奖': '✅',
             'AD无奖': '✅',
             'Reject': '🚫',
             'Waiting': '⏳',
-        }.get(thread['details'].get('申请结果'), '📖')
+        }.get(dict(thread['details']).get('申请结果'), '📖')
 
         return '\n'.join([
             '{logo} {subject}'.format(logo=logo, subject=thread['subject']),
             *(f'* {k}: {v}' for k, v in dict(thread['details']).items()),
-            '#{author} {date}'.format(author=thread['author'], date=post_date),
-            *('#' + str(dict(i)['tagname']).replace(' ', '_')
-              for i in thread['topic_tag'] if isinstance(i, dict)),
+            ' '.join('#' + str(i).replace(' ', '_')
+                     for i in (
+                         thread['author'],
+                         dict(thread['details']).get('专业'),
+                         dict(thread['details']).get('学校名称'),
+                     ) if i),
+            # *('#' + str(dict(i)['tagname']).replace(' ', '_')
+            #   for i in thread['topic_tag'] if isinstance(i, dict)),
             'https://www.1point3acres.com/bbs/thread-{tid}-1-1.html'.format(tid=thread['tid']),
         ])
 

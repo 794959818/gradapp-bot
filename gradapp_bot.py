@@ -229,13 +229,14 @@ class GradAppBot:
     def format_message(thread: dict):
         post_date = datetime.fromtimestamp(thread['dateline'],
                                            tz=ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d')
-        logo = (lambda v:
-                '🎉' if v == 'Offer' else (
-                    '✅' if v == 'AD小奖' else (
-                        '✅' if v == 'AD无奖' else (
-                            '🚫' if v == 'Reject' else (
-                                '⏳' if v == 'Waiting' else '📖')))
-                ))(thread['details'].get('申请结果'))
+
+        logo = {
+            'Offer': '🎉',
+            'AD小奖': '✅',
+            'AD无奖': '✅',
+            'Reject': '🚫',
+            'Waiting': '⏳',
+        }.get(thread['details'].get('申请结果'), default='📖')
 
         return '\n'.join([
             '{logo} {subject}'.format(logo=logo, subject=thread['subject']),

@@ -19,13 +19,10 @@ from bs4 import BeautifulSoup
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 
-def wait(n: float, _async: bool = False):
+def wait(n: float):
     def decorator(call):
         def wrapper(*args, **kwargs):
-            if _async:
-                asyncio.sleep(n)
-            else:
-                time.sleep(n)
+            time.sleep(n)
             return call(*args, **kwargs)
         return wrapper
     return decorator

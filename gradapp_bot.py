@@ -248,11 +248,11 @@ class GradAppBot:
         ])
 
     @wait(random.uniform(1, 3))
-    async def broadcast(self, thread: dict):
+    async def broadcast(self, message: str):
         async with self.bot:
             await self.bot.send_message(
                 chat_id=self.chat_id,
-                text=self.format_message(thread),
+                text=message,
                 disable_web_page_preview=False,
                 disable_notification=False)
 
@@ -263,6 +263,9 @@ class GradAppBot:
         count = 0
         # iterate threads in ascending order
         for thread in threads:
+            # build broadcast message from thread
+            message = self.format_message(thread=thread)
+
             # break if update last tid succeeded
             if not await self.set_last_tid(thread['tid']):
                 break
@@ -270,7 +273,7 @@ class GradAppBot:
             logging.info('tid={tid}\tsubject={subject}'.format(
                 tid=thread['tid'], subject=thread['subject']))
             # broadcast to channel
-            await self.broadcast(thread)
+            await self.broadcast(message=message)
             count += 1
 
         logging.info('Found and broadcast {0} threads.'.format(count))

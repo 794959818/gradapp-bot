@@ -236,7 +236,7 @@ class GradAppBot:
             'AD无奖': '✅',
             'Reject': '🚫',
             'Waiting': '⏳',
-        }.get(thread['details'].get('申请结果'), default='📖')
+        }.get(thread['details'].get('申请结果'), '📖')
 
         return '\n'.join([
             '{logo} {subject}'.format(logo=logo, subject=thread['subject']),

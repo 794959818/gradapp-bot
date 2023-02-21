@@ -6,8 +6,8 @@ import re
 import sys
 import time
 import traceback
-import typing
 from functools import cached_property
+from typing import Any, Iterable
 from urllib.parse import quote
 
 import requests
@@ -26,7 +26,7 @@ def wait(n: float):
     return decorator
 
 
-def no_exception(v: typing.Any):
+def no_exception(v: Any):
     def decorator(call):
         def wrapper(*args, **kwargs):
             try:
@@ -91,10 +91,10 @@ class Helper1P3A:
                 return option
         return {}
 
-    def get_gradapp_threads(self, last_tid: int = 0) -> typing.Iterable[dict]:
+    def get_gradapp_threads(self, last_tid: int = 0) -> Iterable[dict]:
 
         @wait(random.uniform(1, 3))
-        def inline_get_gradapp_threads(pg: int = 1, depth: int = 1) -> typing.Iterable[dict]:
+        def inline_get_gradapp_threads(pg: int = 1, depth: int = 1) -> Iterable[dict]:
             """
             curl 'https://api.1point3acres.com/api/forums/82/threads?ps=20&order=time_desc&includes=images,topic_tag&pg=1'
                 -H ':authority: api.1point3acres.com'
@@ -137,7 +137,7 @@ class Helper1P3A:
 
         return reversed(inline_get_gradapp_threads())
 
-    def get_gradapp_threads_with_details(self, last_tid: int = 0) -> typing.Iterable[dict]:
+    def get_gradapp_threads_with_details(self, last_tid: int = 0) -> Iterable[dict]:
         return (dict(**thread, details=self.get_thread_details(thread['tid']))
                 for thread in self.get_gradapp_threads(last_tid=last_tid))
 

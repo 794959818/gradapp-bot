@@ -19,10 +19,13 @@ from bs4 import BeautifulSoup
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 
-def wait(n: float):
+def wait(n: float, _async: bool = False):
     def decorator(call):
         def wrapper(*args, **kwargs):
-            time.sleep(n)
+            if _async:
+                asyncio.sleep(n)
+            else:
+                time.sleep(n)
             return call(*args, **kwargs)
         return wrapper
     return decorator
@@ -205,10 +208,8 @@ class GradAppBot:
         self.bot = telegram.Bot(self.bot_token)
 
     async def get_last_tid(self) -> int:
-        async with self.bot:
-            chat = await self.bot.get_chat(chat_id=self.chat_id)
-            self.chat_description = chat.description
-
+        chat = await self.bot.get_chat(chat_id=self.chat_id)
+        self.chat_description = chat.description
         tids = re.findall(r'last-tid=(\d+)', chat.description)
         return int(tids[0]) if len(tids) > 0 else -1
 
@@ -217,14 +218,13 @@ class GradAppBot:
         if not self.chat_description:
             return False
 
-        async with self.bot:
-            self.chat_description = re.sub(
-                r'last-tid=(\d+)',
-                f'last-tid={tid}',
-                self.chat_description)
-            return await self.bot.set_chat_description(
-                chat_id=self.chat_id,
-                description=self.chat_description)
+        self.chat_description = re.sub(
+            r'last-tid=(\d+)',
+            f'last-tid={tid}',
+            self.chat_description)
+        return await self.bot.set_chat_description(
+            chat_id=self.chat_id,
+            description=self.chat_description)
 
     @staticmethod
     def format_message(thread: dict):
@@ -250,12 +250,11 @@ class GradAppBot:
 
     @wait(random.uniform(1, 3))
     async def broadcast(self, message: str):
-        async with self.bot:
-            await self.bot.send_message(
-                chat_id=self.chat_id,
-                text=message,
-                disable_web_page_preview=False,
-                disable_notification=False)
+        await self.bot.send_message(
+            chat_id=self.chat_id,
+            text=message,
+            disable_web_page_preview=False,
+            disable_notification=False)
 
     async def check_and_push(self):
         last_tid = await self.get_last_tid()

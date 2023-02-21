@@ -212,6 +212,7 @@ class GradAppBot:
         tids = re.findall(r'last-tid=(\d+)', chat.description)
         return int(tids[0]) if len(tids) > 0 else -1
 
+    @wait(random.uniform(2, 3))
     async def set_last_tid(self, tid: int) -> bool:
         if not self.chat_description:
             return False
